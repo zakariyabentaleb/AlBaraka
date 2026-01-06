@@ -1,0 +1,65 @@
+services:
+  mysql:
+    image: 'mysql:8.0'
+    container_name: albaraka-mysql
+    environment:
+      - 'MYSQL_DATABASE=keycloak'
+      - 'MYSQL_ROOT_PASSWORD=root'
+      - 'MYSQL_USER=albaraka'
+      - 'MYSQL_PASSWORD=albaraka123'
+    ports:
+      - '3308:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - albaraka-network
+
+  keycloak:
+    image: 'quay.io/keycloak/keycloak:23.0'
+    container_name: albaraka-keycloak
+    environment:
+      - 'KEYCLOAK_ADMIN=admin'
+      - 'KEYCLOAK_ADMIN_PASSWORD=admin'
+      - 'KC_DB=mysql'
+      - 'KC_DB_URL=jdbc:mysql://mysql:3306/keycloak'
+      - 'KC_DB_USERNAME=root'
+      - 'KC_DB_PASSWORD=root'
+      - 'KC_HOSTNAME=localhost'
+      - 'KC_HOSTNAME_PORT=8180'
+      - 'KC_HOSTNAME_STRICT=false'
+      - 'KC_HOSTNAME_STRICT_HTTPS=false'
+      - 'KC_HTTP_ENABLED=true'
+    command:
+      - start-dev
+    ports:
+      - '8180:8080'
+    depends_on:
+      - mysql
+    networks:
+      - albaraka-network
+
+  app:
+    build: .
+    image: albaraka-bank-app
+    container_name: albaraka-app
+    depends_on:
+      - mysql
+      - keycloak
+    ports:
+      - '8080:8080'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - 'DB_URL=jdbc:mysql://mysql:3306/albaraka_bank?createDatabaseIfNotExist=true'
+      - 'DB_USER=root'
+      - 'DB_PASSWORD=root'
+      - 'KEYCLOAK_JWK_SET_URI=http://host.docker.internal:8180/realms/albaraka-realm/protocol/openid-connect/certs'
+    networks:
+      - albaraka-network
+
+volumes:
+  mysql_data:
+
+networks:
+  albaraka-network:
+    driver: bridge
