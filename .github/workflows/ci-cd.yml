@@ -48,7 +48,9 @@ jobs:
   build-and-push-docker:
     needs: build-and-test
     runs-on: ubuntu-latest
-
+    if: |
+      github.ref_name == 'master' &&
+      needs.build-and-test.result == 'success'
     
     steps:
     - name: Checkout code
