@@ -45,10 +45,12 @@ jobs:
         DB_PASSWORD: root
       run: mvn test -DskipTests
 
-  build-and-push-docker:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    build-and-push-docker:
+      needs: build-and-test
+      runs-on: ubuntu-latest
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
     
     steps:
     - name: Checkout code
